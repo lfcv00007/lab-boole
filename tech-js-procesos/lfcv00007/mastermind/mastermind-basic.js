@@ -96,14 +96,10 @@ function startMastermind() {
                     console.writeln(`Wrong colors, they must be: rgybmc without repeated`)
                     return false;
                 }
-    
                 return true;
     
                 function isValidLength(proposedCombination, COMBINATION_LENGTH) {
-                    if (proposedCombination.length === COMBINATION_LENGTH) {
-                        return true;
-                    }
-                    return false;
+                    return proposedCombination.length === COMBINATION_LENGTH ? true : false;
                 }
     
                 function hasValidColors(proposedCombination, ALLOWED_COLORS) {
@@ -135,8 +131,10 @@ function startMastermind() {
                                 repeatedColorCount[i] = count;
                             }
                         }
-                        if (repeatedColorCount[i] > 1) {
-                            return true;
+                        if (repeatedColorCount.length > 0 ) {
+                            if(repeatedColorCount[i] > 1) {
+                                return true;
+                            }
                         }
                     }
                     return false;
@@ -170,11 +168,9 @@ function startMastermind() {
 
     function isResumed() {
         let userInput = '';
-        let inputError = false;
         do {
             userInput = console.readString(`Do you want to continue? (y/n)?`);
-            inputError = userInput !== 'y' && userInput !== 'n' ? true : false;
-        } while(inputError === true);
+        } while(userInput !== 'y' && userInput !== 'n');
         return userInput === 'y' ? true : false;
     }
 }

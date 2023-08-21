@@ -16,7 +16,6 @@ function startMastermind() {
         previousResultsMessages: [],
         endOfgame: false
     };
-
     do {
         mastermind.secretCombination = generateRandomCombination(mastermind);
         playMastermind(mastermind);
