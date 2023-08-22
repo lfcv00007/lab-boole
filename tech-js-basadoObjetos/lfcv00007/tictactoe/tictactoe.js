@@ -4,40 +4,39 @@ const console = new Console();
 startTicTacToe();
 
 function startTicTacToe() {
-    const Cordinate = {
-        x,
-        y
-    }
-
-    const ticTacToe = {
-        MAX_TOKENS: 3,
-        TOKENS: [`X`, `Y`],
-        EMPTY_TOKEN: ` `,
-        gameMode: [],
-        turn: {
-            nTurn: 0,
-            originPosition: {
-                coordinate: Cordinate,
-                token: this.EMPTY_TOKEN,
-            },
-            destinationPosition: {
-                coordinate: Cordinate,
-                token: this.EMPTY_TOKEN,
-            },
-        },
-        board: [
-            [this.EMPTY_TOKEN, this.EMPTY_TOKEN, this.EMPTY_TOKEN],
-            [this.EMPTY_TOKEN, this.EMPTY_TOKEN, this.EMPTY_TOKEN],
-            [this.EMPTY_TOKEN, this.EMPTY_TOKEN, this.EMPTY_TOKEN],
-        ],
-    };
-
+    let ticTacToe = initTicTacToe();
     do {
-        ticTacToe.gameMode = selectPlayersMode();
-        playTicTacToe(gameMode);
+        selectPlayersGameMode(ticTacToe);
+        playTicTacToe(ticTacToe);
     } while (isResumed() === true);
 
-    function selectPlayersMode() {
+    function initTicTacToe() {
+        let coordinate = {
+            x: undefined,
+            y: undefined,
+        };
+        let game = {
+            MAX_TOKENS: 3,
+            TOKENS: ['X', 'Y'],
+            EMPTY_TOKEN: ` `,
+            playersGameMode: [],
+            turn: {
+                nTurn: 0,
+                originCoordinate: coordinate,
+                destinationCoordinate: coordinate,
+            },
+            board: [],
+        };
+        for (let i = 0; i < game.MAX_TOKENS; i++) {
+            game.board[i] = [];
+            for (let j = 0; j < game.MAX_TOKENS; j++) {
+               game.board[i][j] = game.EMPTY_TOKEN;
+            }
+        }
+        return game;
+    }
+
+    function selectPlayersGameMode(ticTacToe) {
         const modeCombinations = [
             [playAsHuman, playAsHuman],
             [playAsHuman, playAsComputer],
@@ -48,135 +47,138 @@ function startTicTacToe() {
             userInput = console.readNumber(`Selecciona el modo de juego:\n 1 - Jugador VS Jugador\n 2 - Jugador VS Ordenador\n 3 - Ordenador VS Ordenador\n`);
         } while (userInput !== 1 && userInput !== 2 && userInput !== 3);
         console.writeln(`--- TIC TAC TOE ---`);
-        return modeCombinations[userInput - 1];
+        ticTacToe.playersGameMode = modeCombinations[userInput - 1];
 
         function playAsHuman(message) {
             const row = console.readNumber(`Fila ${message}:  `);
             const column = console.readNumber(`Columna ${message}:  `);
-            return [row - 1, column - 1];
+            return {
+                x: row - 1,
+                y: column - 1,
+            };
         }
 
-        function playAsComputer() {
-            return [parseInt(Math.random() * MAX_TOKENS), parseInt(Math.random() * MAX_TOKENS)];
+        function playAsComputer(message, MAX_TOKENS) {
+            return {
+                x: parseInt(Math.random() * MAX_TOKENS),
+                y: parseInt(Math.random() * MAX_TOKENS),
+            };
         }
     }
 
-    function playTicTacToe(players) {
-        const TOKENS = ['X', 'Y'];
-        const EMPTY_TOKEN = ' ';
-        let gameBoard = [
-            [EMPTY_TOKEN, EMPTY_TOKEN, EMPTY_TOKEN],
-            [EMPTY_TOKEN, EMPTY_TOKEN, EMPTY_TOKEN],
-            [EMPTY_TOKEN, EMPTY_TOKEN, EMPTY_TOKEN],
-        ];
+    function playTicTacToe(ticTacToe) {
         let winner = false;
-        let turn = 0;
         do {
-            printBoard(gameBoard);
-            placeToken(gameBoard, TOKENS[getActivePlayer(turn)], players[getActivePlayer(turn)]);
-            if (isTicTacToe(gameBoard, turn)) {
+            printBoard(ticTacToe.board);
+            placeToken(ticTacToe, ticTacToe.playersGameMode[getActivePlayer(ticTacToe.turn.nTurn)]);
+            if (isTicTacToe(ticTacToe)) {
                 winner = true;
             } else {
-                turn++;
+                ticTacToe.turn.nTurn++;
             }
         } while (winner === false);
-        printBoard(gameBoard);
-        console.writeln(`Victoria para el jugador ${TOKENS[getActivePlayer(turn)]}!`)
+        printBoard(ticTacToe.board);
+        console.writeln(`Victoria para el jugador ${getActiveToken(ticTacToe)}!`)
 
-        function printBoard(gameBoard) {
+        function printBoard(board) {
             console.writeln(`-------------`);
-            for (let i = 0; i < gameBoard.length; i++) {
-                for (let j = 0; j < gameBoard[i].length; j++) {
-                    console.write(`| ${gameBoard[i][j]} `);
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board[i].length; j++) {
+                    console.write(`| ${board[i][j]} `);
                 }
                 console.write(`|\n-------------\n`);
             }
         }
 
-        function placeToken(gameBoard, token, player) {
-            console.writeln(`Turno ${turn + 1} para: ${token}`);
-            let destinationPosition, originPosition;
+        function getActivePlayer(turn) {
+            return turn % 2 === 0 ? 0 : 1;
+        }
+
+        function placeToken(ticTacToe, playerPlaceToken) {
+            let activeToken = getActiveToken(ticTacToe);
+            console.writeln(`Turno ${ticTacToe.turn.nTurn + 1} para: ${activeToken}`);
             let validInput = false;
-            if (isAllPlayerTokensUsed(gameBoard, token) === true) {
+            if (isAllPlayerTokensUsed(ticTacToe.board, activeToken) === true) {
                 while (validInput == false) {
-                    originPosition = player('origen');
-                    if (isValidPosition(originPosition) && isValidToken(gameBoard, originPosition, token)) {
+                    ticTacToe.turn.originCoordinate = playerPlaceToken('origen', ticTacToe.MAX_TOKENS);
+                    if (isValidPosition(ticTacToe, ticTacToe.turn.originCoordinate) && isValidToken(ticTacToe, ticTacToe.turn.originCoordinate, activeToken)) {
                         validInput = true;
                     }
                 }
-                setToken(gameBoard, originPosition[0], originPosition[1], EMPTY_TOKEN);
+                setToken(ticTacToe, ticTacToe.turn.originCoordinate, ticTacToe.EMPTY_TOKEN);
             }
             validInput = false;
             while (validInput === false) {
-                destinationPosition = player('destino');
-                if (isValidPosition(destinationPosition) && isPositionEmpty(gameBoard, destinationPosition, token)) {
+                ticTacToe.turn.destinationCoordinate = playerPlaceToken('destino', ticTacToe.MAX_TOKENS);
+                if (isValidPosition(ticTacToe, ticTacToe.turn.destinationCoordinate) && isPositionEmpty(ticTacToe, ticTacToe.turn.destinationCoordinate)) {
                     validInput = true;
                 }
             }
-            setToken(gameBoard, destinationPosition[0], destinationPosition[1], token);
+            setToken(ticTacToe, ticTacToe.turn.destinationCoordinate, activeToken);
 
-            function isValidPosition(position) {
-                if (position[0] < 0 || position[0] > MAX_TOKENS) return false;
-                if (position[1] < 0 || position[1] > MAX_TOKENS) return false;
+            function isValidPosition(ticTacToe, coordinate) {
+                console.writeln(coordinate.y);
+                if (coordinate.x < 0 || coordinate.x > ticTacToe.MAX_TOKENS - 1) return false;
+                if (coordinate.y < 0 || coordinate.y > ticTacToe.MAX_TOKENS - 1) return false;
                 return true;
             }
 
-            function isValidToken(gameBoard, originposition, token) {
-                return gameBoard[originposition[0]][originposition[1]] === token ? true : false;
+            function isValidToken(ticTacToe, coordinate, token) {
+                return ticTacToe.board[coordinate.x][coordinate.y] === token ? true : false;
             }
 
-            function isPositionEmpty(gameBoard, position) {
-                return gameBoard[position[0]][position[1]] === EMPTY_TOKEN ? true : false;
+            function isPositionEmpty(ticTacToe, coordinate) {
+                return ticTacToe.board[coordinate.x][coordinate.y] === ticTacToe.EMPTY_TOKEN ? true : false;
             }
 
-            function setToken(gameBoard, row, column, token) {
-                gameBoard[row][column] = token;
+            function setToken(ticTacToe, coordinate, token) {
+                ticTacToe.board[coordinate.x][coordinate.y] = token;
             }
         }
 
-        function isTicTacToe(tokens, turn) {
+        function isTicTacToe(ticTacToe) {
             let countRows = [0, 0, 0];
             let countColumns = [0, 0, 0];
             let countDiagonal = 0;
             let countInverse = 0;
-            for (let i = 0; i < tokens.length; i++) {
-                for (let j = 0; j < tokens[i].length; j++) {
-                    if (tokens[i][j] === TOKENS[getActivePlayer(turn)]) {
+            for (let i = 0; i < ticTacToe.board.length; i++) {
+                for (let j = 0; j < ticTacToe.board[i].length; j++) {
+                    if (ticTacToe.board[i][j] === getActiveToken(ticTacToe)) {
                         countRows[i]++;
                         countColumns[j]++;
                         if (i - j === 0) {
                             countDiagonal++;
                         }
-                        if (i + j === MAX_TOKENS - 1) {
+                        if (i + j === ticTacToe.MAX_TOKENS - 1) {
                             countInverse++;
                         }
                     }
                 }
             }
-            if (countDiagonal === MAX_TOKENS || countInverse === MAX_TOKENS) {
+            if (countDiagonal === ticTacToe.MAX_TOKENS || countInverse === ticTacToe.MAX_TOKENS) {
                 return true;
             }
             for (let i = 0; i < countRows.length; i++) {
-                if (countRows[i] === MAX_TOKENS) {
+                if (countRows[i] === ticTacToe.MAX_TOKENS) {
                     return true;
                 }
-                if (countColumns[i] === MAX_TOKENS) {
+                if (countColumns[i] === ticTacToe.MAX_TOKENS) {
                     return true;
                 }
             }
             return false;
         }
 
-        function getActivePlayer(turn) {
-            return turn % 2 === 0 ? 0 : 1;
+        function getActiveToken(ticTacToe) {
+            return (ticTacToe.turn.nTurn % 2 === 0) ? ticTacToe.TOKENS[0] : ticTacToe.TOKENS[1];
         }
     }
 
-    function isAllPlayerTokensUsed(gameBoard, token) {
+    function isAllPlayerTokensUsed(board, token) {
         let counter = 0;
-        for (let i = 0; i < gameBoard.length; i++) {
-            for (let j = 0; j < gameBoard[i].length; j++) {
-                if (gameBoard[i][j] === token) {
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (board[i][j] === token) {
                     counter++;
                 }
             }
