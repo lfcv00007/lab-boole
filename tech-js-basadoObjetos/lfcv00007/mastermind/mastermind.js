@@ -11,10 +11,7 @@ function startMastermind() {
         secretCombination: '',
         proposedCombination: '',
         attempt: 0,
-        blacks: 0,
-        whites: 0,
-        previousResultsMessages: [],
-        endOfgame: false
+        previousAttempts: [],
     };
     do {
         mastermind.secretCombination = generateRandomCombination(mastermind);
@@ -46,35 +43,23 @@ function startMastermind() {
     function playMastermind(mastermind) {
         do {
             printBoardMessages(mastermind);
-            if (isEndOfGame(mastermind) === true) {
-                mastermind.endOfgame = true;
-            } else {
-                mastermind = playNextAttempt(mastermind);
-            }
-        } while (mastermind.endOfgame === false);
-        printEndOfGameMessage(mastermind);
+            mastermind.previousAttempts[mastermind.attempt] = playAttempt(mastermind);
+        } while (isEndOfGame(mastermind, mastermind.previousAttempts[mastermind.attempt]) === false);
+        printEndOfGameMessage(mastermind, mastermind.previousAttempts[mastermind.attempt]);
 
         function printBoardMessages(mastermind) {
             if (mastermind.attempt === 0) {
                 console.writeln(` ----- MASTERMIND ----- `);
             }        
             console.writeln(`\n ${mastermind.attempt + 1} attempt(s): \n****`);
-            for (let i = 0; i < mastermind.previousResultsMessages.length; i++) {
-                console.writeln(mastermind.previousResultsMessages[i]);
+            for (let i = 0; i < mastermind.previousAttempts.length; i++) {
+                console.writeln(mastermind.previousAttempts[i].proposedCombinationMessage);
             }
         }
 
-        function isEndOfGame(mastermind) {
-            if (mastermind.blacks === mastermind.COMBINATION_LENGTH) return true;
-            if (mastermind.attempt === mastermind.MAX_ATTEMPTS - 1) return true;
-            return false;
-        }
-
-        function playNextAttempt(mastermind) {
+        function playAttempt(mastermind) {
             mastermind.proposedCombination = proposeSecretCombination(mastermind.ALLOWED_COLORS, mastermind.COMBINATION_LENGTH);
-            countBlacksAndWhites(mastermind);
-            mastermind.attempt++;
-            return mastermind;
+            return countBlacksAndWhites(mastermind);
 
             function proposeSecretCombination(ALLOWED_COLORS, COMBINATION_LENGTH) {
                 let isValid = false;
@@ -160,15 +145,24 @@ function startMastermind() {
                         }
                     }
                 }
-                mastermind.previousResultsMessages[mastermind.attempt] = `${mastermind.proposedCombination} --> ${blacks} blacks and ${whites} whites`;
-                mastermind.blacks = blacks;
-                mastermind.whites = whites;
+                return {
+                    proposedCombinationMessage: `${mastermind.proposedCombination} --> ${blacks} blacks and ${whites} whites`,
+                    blacks,
+                    whites,
+                }
             }
         }
 
-        function printEndOfGameMessage(mastermind) {
+        function isEndOfGame(mastermind, attempt) {
+            if (attempt.blacks === mastermind.COMBINATION_LENGTH) return true;
+            if (mastermind.attempt === mastermind.MAX_ATTEMPTS - 1) return true;
+            mastermind.attempt++;
+            return false;
+        }
+
+        function printEndOfGameMessage(mastermind, attempt) {
             const secretCombinationMsg = `Secret combination:\n * * * *\n ${mastermind.secretCombination}`;
-            if (mastermind.blacks === mastermind.COMBINATION_LENGTH) {
+            if (attempt.blacks === mastermind.COMBINATION_LENGTH) {
                 console.writeln(`You've won!!! ;-) \n ${secretCombinationMsg}`);
             } else {
                 console.writeln(`You've lost!!! :-( \n ${secretCombinationMsg}`);
