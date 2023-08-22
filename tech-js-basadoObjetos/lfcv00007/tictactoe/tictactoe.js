@@ -4,9 +4,36 @@ const console = new Console();
 startTicTacToe();
 
 function startTicTacToe() {
-    const MAX_TOKENS = 3;
+    const Cordinate = {
+        x,
+        y
+    }
+
+    const ticTacToe = {
+        MAX_TOKENS: 3,
+        TOKENS: [`X`, `Y`],
+        EMPTY_TOKEN: ` `,
+        gameMode: [],
+        turn: {
+            nTurn: 0,
+            originPosition: {
+                coordinate: Cordinate,
+                token: this.EMPTY_TOKEN,
+            },
+            destinationPosition: {
+                coordinate: Cordinate,
+                token: this.EMPTY_TOKEN,
+            },
+        },
+        board: [
+            [this.EMPTY_TOKEN, this.EMPTY_TOKEN, this.EMPTY_TOKEN],
+            [this.EMPTY_TOKEN, this.EMPTY_TOKEN, this.EMPTY_TOKEN],
+            [this.EMPTY_TOKEN, this.EMPTY_TOKEN, this.EMPTY_TOKEN],
+        ],
+    };
+
     do {
-        const gameMode = selectPlayersMode();
+        ticTacToe.gameMode = selectPlayersMode();
         playTicTacToe(gameMode);
     } while (isResumed() === true);
 
