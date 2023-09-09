@@ -1,0 +1,38 @@
+@startuml Mastermind
+class Mastermind
+class Board
+class Player
+class CodeMaker
+class CodeBreaker
+class Attempt
+class Combination
+class SecretCombination
+class ProposedCombination {
+    blacks: Number
+    whites: Number
+}
+
+enum COLORS {
+    RED
+    CYAN
+    BLUE
+    MAGENTA
+    GREEN
+    YELLOW
+}
+Mastermind *--> Board
+Mastermind *--> "1-2" Player
+Mastermind *--> "1-N" Attempt
+
+Player <|-- CodeBreaker
+Player <|-- CodeMaker
+CodeBreaker ..> Attempt
+Attempt *-- ProposedCombination
+Combination *--> "4" COLORS
+Combination <|-up- ProposedCombination
+Combination <|-up- SecretCombination
+CodeMaker "create" --> SecretCombination
+CodeBreaker "propose" -->  ProposedCombination
+Board *--> SecretCombination
+Board o--> "0-9" ProposedCombination
+@enduml
