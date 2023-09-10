@@ -7,48 +7,66 @@ mastermind.start(initContinueDialog());
 
 function initMastermind() {
     const mastermind = {
-        secretCombination: initSecretCombination(initCombination()),
-        proposedCombination: initProposedCombination(initCombination()),
-        attempt: {
-            MAX_ATTEMPTS: 10,
-            previousAttempts: [],
+        secretCombination: initSecretCombination(),
+        proposedCombination: initProposedCombination(),
+        board: {
+            results: [],
+            printBoardMessages: function () {
+                if (this.getNumberOfAttempts() === 0) {
+                    console.writeln(` ----- MASTERMIND ----- `);
+                }
+                console.writeln(`\n ${this.getNumberOfAttempts() + 1} attempt(s): \n****`);
+                for (let i = 0; i < this.results.length; i++) {
+                    console.writeln(this.results[i].proposedCombinationMessage);
+                }
+            },
             playAttempt: function (proposedCombination, secretCombination) {
-                this.previousAttempts[this.getNumberOfAttempts()] = proposedCombination.countBlacksAndWhites(secretCombination);
+                proposedCombination.proposeCombination();
+                this.results[this.getNumberOfAttempts()] = this.getResult(proposedCombination.getColors(), secretCombination);
                 return this.isCodeBroken(secretCombination);
             },
             isCodeBroken: function (secretCombination) {
-                if (this.previousAttempts[this.getNumberOfAttempts() - 1].blacks === secretCombination.length) return true;
+                if (this.results[this.getNumberOfAttempts() - 1].blacks === secretCombination.length) return true;
                 return false;
             },
             getNumberOfAttempts: function () {
-                return this.previousAttempts.length;
+                return this.results.length;
+            },
+            getResult: function (proposedCombination, secretCombination) {
+                const result = {
+                    proposedCombinationMessage: ``,
+                    blacks: 0,
+                    whites: 0,
+                }
+                for (let i = 0; i < secretCombination.length; i++) {
+                    for (let j = 0; j < proposedCombination.length; j++) {
+                        if (j === i && secretCombination[i] === proposedCombination[j]) {
+                            result.blacks++;
+                        } else if (secretCombination[i] === proposedCombination[j]) {
+                            result.whites++;
+                        }
+                    }
+                }
+                result.proposedCombinationMessage = `${proposedCombination} --> ${result.blacks} blacks and ${result.whites} whites`;
+                return result;
+            },
+            isEndOfGame: function(secretCombination) {
+                const MAX_ATTEMPTS = 10;
+                return this.isCodeBroken(secretCombination) || this.results.length > MAX_ATTEMPTS - 1 ? true : false;
             }
         },
 
         playMastermind: function () {
-            this.attempt.previousAttempts = [];
-            let isEndOfGame = false;
+            this.board.results = [];
             do {
-                this.printBoardMessages();
-                this.proposedCombination.proposeCombination();
-                let isCodeBroken = this.attempt.playAttempt(this.proposedCombination, this.secretCombination.getSecretCombination()); 
-                isEndOfGame = isCodeBroken || this.attempt.getNumberOfAttempts() > this.attempt.MAX_ATTEMPTS - 1;
-            } while (isEndOfGame === false);
-        },
-
-        printBoardMessages: function () {
-            if (this.attempt.getNumberOfAttempts() === 0) {
-                console.writeln(` ----- MASTERMIND ----- `);
-            }
-            console.writeln(`\n ${this.attempt.getNumberOfAttempts() + 1} attempt(s): \n****`);
-            for (let i = 0; i < this.attempt.getNumberOfAttempts(); i++) {
-                console.writeln(this.attempt.previousAttempts[i].proposedCombinationMessage);
-            }
+                this.board.printBoardMessages();
+                this.board.playAttempt(this.proposedCombination, this.secretCombination.getColors()); 
+            } while (this.board.isEndOfGame(this.secretCombination.getColors()) === false);
         },
 
         printEndOfGameMessage: function () {
-            const secretCombinationMsg = `Secret combination:\n * * * *\n ${this.secretCombination.getSecretCombination()}`;
-            if (this.attempt.isCodeBroken(this.secretCombination.getSecretCombination())) {
+            const secretCombinationMsg = `Secret combination:\n * * * *\n ${this.secretCombination.getColors()}`;
+            if (this.board.isCodeBroken(this.secretCombination.getColors())) {
                 console.writeln(`You've won!!! ;-) \n ${secretCombinationMsg}`);
             } else {
                 console.writeln(`You've lost!!! :-( \n ${secretCombinationMsg}`);
@@ -90,8 +108,8 @@ function initCombination() {
             }
             return true;
         },
-        isValidLength: function (proposedCombination) {
-            return proposedCombination.length === this.COMBINATION_LENGTH ? true : false;
+        isValidLength: function (combination) {
+            return combination.length === this.COMBINATION_LENGTH ? true : false;
         },
         hasValidColors: function (combination) {
             for (let i = 0; i < combination.length; i++) {
@@ -131,12 +149,13 @@ function initCombination() {
     };
 }
 
-function initSecretCombination(combination) {
+function initSecretCombination() {
+    const combination = initCombination();
     const that = {
-        secretCombination: [],
+        colors: [],
         isDuplicatedColor: function (color) {
-            for (let i = 0; i < this.secretCombination.length; i++) {
-                if (this.secretCombination[i] === color) {
+            for (let i = 0; i < this.colors.length; i++) {
+                if (this.colors[i] === color) {
                     return true;
                 }
             }
@@ -147,50 +166,32 @@ function initSecretCombination(combination) {
             while (i <= combination.COMBINATION_LENGTH - 1) {
                 let randomColor = combination.getRandomColor();
                 if (this.isDuplicatedColor(randomColor) === false) {
-                    this.secretCombination[i] = randomColor;
+                    this.colors[i] = randomColor;
                     i++
                 }
             }
         },
     };
     that.generateRandomCombination();
-    console.write(that.secretCombination);
     return {
-        getSecretCombination: function () {
-            return that.secretCombination;
+        getColors: function () {
+            return that.colors;
         },
-        getCombinationLength: function () {
-            return that.secretCombination.length;
-        }
     };
 }
 
-function initProposedCombination(combination) {
-    let proposedCombination;
+function initProposedCombination() {
+    const combination = initCombination();
+    let colors;
     return {
         proposeCombination: () => {
             do {
-                proposedCombination = console.readString(`Propose a combination: `);
-            } while (combination.isValidCombination(proposedCombination) === false);
-            return proposedCombination;
+                colors = console.readString(`Propose a combination: `);
+            } while (combination.isValidCombination(colors) === false);
+            return colors;
         },
-        countBlacksAndWhites: (secretCombination) => {
-            const result = {
-                proposedCombinationMessage: `${proposedCombination} --> ${blacks} blacks and ${whites} whites`,
-                blacks: 0,
-                whites: 0,
-            }
-            for (let i = 0; i < secretCombination.length; i++) {
-                for (let j = 0; j < proposedCombination.length; j++) {
-                    if (j === i && secretCombination[i] === proposedCombination[j]) {
-                        result.blacks++;
-                    } else if (secretCombination[i] === proposedCombination[j]) {
-                        result.whites++;
-                    }
-                }
-            }
-            result.proposedCombinationMessage = `${proposedCombination} --> ${result.blacks} blacks and ${result.whites} whites`;
-            return result;
+        getColors: function () {
+            return colors;
         }
     };
 }
